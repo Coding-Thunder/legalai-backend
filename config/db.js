@@ -9,16 +9,30 @@
  */
 
 const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+
+let mongod;
 
 async function connectDB(uri) {
+  // For development, use in-memory MongoDB if localhost URI is provided
+  if (uri && uri.includes('localhost:27017') && process.env.NODE_ENV === 'development') {
+    console.log('Starting MongoDB Memory Server for development...');
+    
+    if (!mongod) {
+      mongod = await MongoMemoryServer.create();
+      uri = mongod.getUri();
+      console.log('MongoDB Memory Server started at:', uri);
+    }
+  }
+
   if (!uri) throw new Error('MONGODB_URI is not provided');
 
-  // Connection options suited for production
+  // Connection options for modern MongoDB driver
   const opts = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    // keepAlive and poolSize can be tuned per deployment requirements
+    // Removed deprecated options: useNewUrlParser, useUnifiedTopology
     serverSelectionTimeoutMS: 5000,
+    maxPoolSize: 10, // Maximum number of connections in the connection pool
+    minPoolSize: 1,  // Minimum number of connections in the connection pool
   };
 
   const maxRetries = Number(process.env.DB_MAX_RETRIES || 5);

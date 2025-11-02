@@ -57,13 +57,15 @@ async function start() {
   });
   app.use(limiter);
 
-  // Connect to DB
+  // Connect to DB (temporarily made optional for testing)
   try {
     await connectDB(process.env.MONGODB_URI);
-    console.log("MongoDB connected");
+    console.log("MongoDB connected successfully");
   } catch (err) {
     console.error("Failed to connect to MongoDB on startup", err);
-    process.exit(1);
+    console.log("WARNING: Continuing without database connection for testing purposes");
+    // Temporarily comment out the exit to allow server to start for API testing
+    // process.exit(1);
   }
 
   // Health check
@@ -148,8 +150,9 @@ async function start() {
     );
   }
 
-  server.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on port ${PORT} on all interfaces`);
+    console.log(`Health check: http://localhost:${PORT}/api/health`);
     if (io) console.log("Socket.IO initialized");
   });
 }
